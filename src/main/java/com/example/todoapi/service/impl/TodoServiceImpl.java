@@ -5,6 +5,8 @@ import com.example.todoapi.entity.Todo;
 import com.example.todoapi.repository.TodoRepository;
 import com.example.todoapi.service.TodoService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,6 +71,24 @@ public class TodoServiceImpl implements TodoService {
         return todoRepository.findByCompleted(completed).stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
+    }
+    
+    @Override
+    public Page<TodoDTO> getTodosWithPagination(Pageable pageable) {
+        return todoRepository.findAll(pageable)
+                .map(this::convertToDTO);
+    }
+    
+    @Override
+    public Page<TodoDTO> searchTodos(String keyword, Boolean completed, Pageable pageable) {
+        return todoRepository.searchTodos(keyword, completed, pageable)
+                .map(this::convertToDTO);
+    }
+    
+    @Override
+    public Page<TodoDTO> getTodosByCompletedWithPagination(Boolean completed, Pageable pageable) {
+        return todoRepository.findByCompleted(completed, pageable)
+                .map(this::convertToDTO);
     }
     
     private TodoDTO convertToDTO(Todo todo) {

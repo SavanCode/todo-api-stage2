@@ -2,117 +2,155 @@
 
 A RESTful API for managing todo items built with Spring Boot.
 
+## Features
+
+- Basic CRUD operations
+- Pagination support
+- Filter by completion status
+- Keyword search
+- Swagger API documentation
+- Unified response format
+- CORS support
+
 ## Technology Stack
 
+### Backend
 - Java 8+
 - Spring Boot 2.7.x
 - Spring Data JPA
-- MySQL
+- Spring Web
+- Spring Validation
+
+### Database
+- MySQL 8.0
+- H2 Database (for testing)
+
+### Build & Tools
 - Maven
 - Lombok
-- Swagger/OpenAPI 3.0
+- Swagger/OpenAPI 3.0 (SpringDoc)
 
-## Features
-
-- CRUD operations for todo items
-- Filter todos by completion status
-- Parameter validation
-- Unified exception handling
-- RESTful design
-- Swagger API documentation
-- Standardized API response format
-
-## Swagger Documentation
-
-The project uses SpringDoc OpenAPI (Swagger) for API documentation. The documentation is automatically generated from the code annotations.
-
-### Accessing Swagger UI
-
-You can access the Swagger UI interface at:
-```
-Swagger UI: http://localhost:8080/swagger-ui.html
-OpenAPI JSON: http://localhost:8080/api-docs
-OpenAPI YAML: http://localhost:8080/api-docs.yaml
-
-```
-
-### Swagger Configuration
-
-The Swagger configuration is defined in `OpenApiConfig.java` and includes:
-- API title and description
-- Version information
-- Contact details
-- License information
-- Server configuration
-
-### Available Documentation
-
-The Swagger UI provides:
-- Interactive API documentation
-- Request/response schemas
-- Example requests
-- Try-it-out functionality
-- Authentication information (if configured)
-
-### API Documentation Features
-
-- Detailed endpoint descriptions
-- Request/response examples
-- Parameter validation rules
-- Response codes and meanings
-- Data models and schemas
+### Documentation
+- Swagger UI
+- OpenAPI Specification
 
 ## API Documentation
 
-The API documentation is available through Swagger UI at:
+### Swagger UI
+Access the interactive API documentation at:
 ```
 http://localhost:8080/swagger-ui.html
 ```
 
-### API Response Format
-
-All API responses follow a standardized format:
-
-```json
-{
-    "status": 200,
-    "message": "Success",
-    "data": {
-        // Response data
-    },
-    "timestamp": "2024-01-01T12:00:00"
-}
+### OpenAPI Specification
+Access the OpenAPI specification at:
+```
+http://localhost:8080/v3/api-docs
 ```
 
-### Available Endpoints
+### OpenAPI YAML
+Download the OpenAPI specification in YAML format:
+```
+http://localhost:8080/v3/api-docs.yaml
+```
 
-#### Get All Todos
+## API Endpoints
+
+### Get All Todos
 ```bash
 GET /api/todos
 ```
 
-#### Get Todo by ID
+### Get Todos with Pagination
+```bash
+GET /api/todos/page
+```
+
+Query Parameters:
+```json
+{
+    "page": 0,
+    "size": 10,
+    "sortBy": "createdAt",
+    "direction": "desc"
+}
+```
+
+### Search Todos
+```bash
+GET /api/todos/search
+```
+
+Query Parameters:
+```json
+{
+    "keyword": "project",
+    "completed": false,
+    "page": 0,
+    "size": 10,
+    "sortBy": "createdAt",
+    "direction": "desc"
+}
+```
+
+### Get Todos by Status with Pagination
+```bash
+GET /api/todos/status/page
+```
+
+Query Parameters:
+```json
+{
+    "completed": false,
+    "page": 0,
+    "size": 10,
+    "sortBy": "createdAt",
+    "direction": "desc"
+}
+```
+
+### Get Todo by ID
 ```bash
 GET /api/todos/{id}
 ```
 
-#### Create Todo
+Path Parameters:
+```json
+{
+    "id": 1
+}
+```
+
+### Create Todo
 ```bash
 POST /api/todos
 Content-Type: application/json
+```
 
+Request Body:
+```json
 {
     "title": "Complete project",
-    "description": "Finish the todo API project",
+    "description": "Finish the Todo API project development and testing",
     "completed": false
 }
 ```
 
-#### Update Todo
+### Update Todo
 ```bash
 PUT /api/todos/{id}
 Content-Type: application/json
+```
 
+Path Parameters:
+```json
+{
+    "id": 1
+}
+```
+
+Request Body:
+```json
 {
     "title": "Updated title",
     "description": "Updated description",
@@ -120,14 +158,57 @@ Content-Type: application/json
 }
 ```
 
-#### Delete Todo
+### Delete Todo
 ```bash
 DELETE /api/todos/{id}
 ```
 
-#### Filter Todos by Status
-```bash
-GET /api/todos/status?completed=true
+Path Parameters:
+```json
+{
+    "id": 1
+}
+```
+
+## Response Format
+
+### Success Response
+```json
+{
+    "code": 200,
+    "message": "success",
+    "data": {
+        // Response data
+    }
+}
+```
+
+### Pagination Response
+```json
+{
+    "code": 200,
+    "message": "success",
+    "data": {
+        "content": [...],
+        "pageNumber": 0,
+        "pageSize": 10,
+        "totalElements": 100,
+        "totalPages": 10,
+        "hasNext": true,
+        "hasPrevious": false,
+        "isFirst": true,
+        "isLast": false
+    }
+}
+```
+
+### Error Response
+```json
+{
+    "code": 400,
+    "message": "Error message",
+    "data": null
+}
 ```
 
 ## Project Structure
@@ -161,6 +242,30 @@ spring.datasource.username=your_username
 spring.datasource.password=your_password
 ```
 
+### H2 Database
+
+The application also supports H2 database for development and testing. To use H2 database, add the following configuration to `application.properties`:
+
+```properties
+spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
+spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
+spring.h2.console.enabled=true
+spring.h2.console.path=/h2-console
+```
+
+Access the H2 console at:
+```
+http://localhost:8080/h2-console
+```
+
+Connection details:
+- JDBC URL: `jdbc:h2:mem:testdb`
+- Username: `sa`
+- Password: (empty)
+
 ### Building the Project
 
 ```bash
@@ -177,14 +282,13 @@ The application will start on port 8080.
 
 ## Error Handling
 
-The API uses a standardized error response format:
+The API uses a unified error response format:
 
 ```json
 {
-    "status": 400,
+    "code": 400,
     "message": "Error message",
-    "data": null,
-    "timestamp": "2024-01-01T12:00:00"
+    "data": null
 }
 ```
 
@@ -195,37 +299,6 @@ Common HTTP status codes:
 - 404: Not Found
 - 500: Internal Server Error
 
-## Testing Functionality
-
-After starting the application, you can test it using the following methods:
-
-Using curl commands:
-```bash
-# Create a TODO
-curl -X POST http://localhost:8080/api/todos \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Learn Spring Boot","description":"Complete TODO List project"}'
-
-# Get all TODOs
-curl http://localhost:8080/api/todos
-
-# Update TODO status
-curl -X PUT http://localhost:8080/api/todos/1 \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Learn Spring Boot","description":"Complete TODO List project","completed":true}'
-```
-
-## H2 Database
-
-Access the H2 console:
-
-```bash
-URL: http://localhost:8080/h2-console
-JDBC URL: jdbc:h2:mem:testdb
-Username: sa
-Password: (empty)
-```
-
 ## License
 
-This project is licensed under the MIT License. 
+This project is licensed under the MIT License.

@@ -2,44 +2,99 @@
 
 A RESTful API for managing todo items built with Spring Boot.
 
+## Table of Contents
+- [Features](#features)
+- [Technology Stack](#technology-stack)
+- [Getting Started](#getting-started)
+- [API Documentation](#api-documentation)
+- [API Endpoints](#api-endpoints)
+- [Response Format](#response-format)
+- [Project Structure](#project-structure)
+- [Database Configuration](#database-configuration)
+- [Security](#security)
+- [Development](#development)
+- [License](#license)
+
 ## Features
 
-- Basic CRUD operations
-- Pagination support
-- Filter by completion status
-- Keyword search
-- Swagger API documentation
-- Unified response format
-- CORS support
+- **Todo Management**
+  - Create, read, update, and delete todo items
+  - Mark todos as complete/incomplete
+  - Set due dates and priorities
+  - Add descriptions and notes
+
+- **Advanced Queries**
+  - Pagination support for large datasets
+  - Filter todos by completion status
+  - Search todos by keyword
+  - Sort todos by various fields
+
+- **Security**
+  - JWT-based authentication
+  - Role-based access control
+  - Secure password storage
+  - Token-based session management
+
+- **Documentation**
+  - Interactive API documentation with Swagger UI
+  - OpenAPI 3.0 specification
+  - Detailed endpoint descriptions
+  - Request/response examples
 
 ## Technology Stack
 
 ### Backend
-- Java 8+
-- Spring Boot 2.7.x
+- Java 17
+- Spring Boot 2.7.18
+- Spring Security
 - Spring Data JPA
-- Spring Web
 - Spring Validation
 
 ### Database
-- MySQL 8.0
-- H2 Database (for testing)
-
-### Build & Tools
-- Maven
-- Lombok
-- Swagger/OpenAPI 3.0 (SpringDoc)
+- H2 Database (Development)
+- JPA/Hibernate
 
 ### Documentation
-- Swagger UI
-- OpenAPI Specification
+- Swagger/OpenAPI 3.0
+- SpringDoc
+
+### Build Tools
+- Maven
+- Lombok
+
+## Getting Started
+
+### Prerequisites
+- Java 17 or higher
+- Maven 3.6 or higher
+- Your favorite IDE (IntelliJ IDEA, Eclipse, etc.)
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/todo-api.git
+   cd todo-api
+   ```
+
+2. Build the project:
+   ```bash
+   mvn clean install
+   ```
+
+3. Run the application:
+   ```bash
+   mvn spring-boot:run
+   ```
+
+The application will start on port 8080.
 
 ## API Documentation
 
 ### Swagger UI
 Access the interactive API documentation at:
 ```
-http://localhost:8080/swagger-ui.html
+http://localhost:8080/swagger-ui/index.html
 ```
 
 ### OpenAPI Specification
@@ -48,127 +103,24 @@ Access the OpenAPI specification at:
 http://localhost:8080/v3/api-docs
 ```
 
-### OpenAPI YAML
-Download the OpenAPI specification in YAML format:
-```
-http://localhost:8080/v3/api-docs.yaml
-```
-
 ## API Endpoints
 
-### Get All Todos
-```bash
-GET /api/todos
-```
+### Authentication
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Register a new user |
+| POST | `/api/auth/login` | Login and get JWT token |
 
-### Get Todos with Pagination
-```bash
-GET /api/todos/page
-```
-
-Query Parameters:
-```json
-{
-    "page": 0,
-    "size": 10,
-    "sortBy": "createdAt",
-    "direction": "desc"
-}
-```
-
-### Search Todos
-```bash
-GET /api/todos/search
-```
-
-Query Parameters:
-```json
-{
-    "keyword": "project",
-    "completed": false,
-    "page": 0,
-    "size": 10,
-    "sortBy": "createdAt",
-    "direction": "desc"
-}
-```
-
-### Get Todos by Status with Pagination
-```bash
-GET /api/todos/status/page
-```
-
-Query Parameters:
-```json
-{
-    "completed": false,
-    "page": 0,
-    "size": 10,
-    "sortBy": "createdAt",
-    "direction": "desc"
-}
-```
-
-### Get Todo by ID
-```bash
-GET /api/todos/{id}
-```
-
-Path Parameters:
-```json
-{
-    "id": 1
-}
-```
-
-### Create Todo
-```bash
-POST /api/todos
-Content-Type: application/json
-```
-
-Request Body:
-```json
-{
-    "title": "Complete project",
-    "description": "Finish the Todo API project development and testing",
-    "completed": false
-}
-```
-
-### Update Todo
-```bash
-PUT /api/todos/{id}
-Content-Type: application/json
-```
-
-Path Parameters:
-```json
-{
-    "id": 1
-}
-```
-
-Request Body:
-```json
-{
-    "title": "Updated title",
-    "description": "Updated description",
-    "completed": true
-}
-```
-
-### Delete Todo
-```bash
-DELETE /api/todos/{id}
-```
-
-Path Parameters:
-```json
-{
-    "id": 1
-}
-```
+### Todo Management
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/todos` | Get all todos |
+| GET | `/api/todos/page` | Get paginated todos |
+| GET | `/api/todos/search` | Search todos with pagination |
+| GET | `/api/todos/status/page` | Get todos by status with pagination |
+| POST | `/api/todos` | Create a new todo |
+| PUT | `/api/todos/{id}` | Update a todo |
+| DELETE | `/api/todos/{id}` | Delete a todo |
 
 ## Response Format
 
@@ -176,7 +128,7 @@ Path Parameters:
 ```json
 {
     "code": 200,
-    "message": "success",
+    "message": "Success",
     "data": {
         // Response data
     }
@@ -187,17 +139,17 @@ Path Parameters:
 ```json
 {
     "code": 200,
-    "message": "success",
+    "message": "Success",
     "data": {
-        "content": [...],
+        "content": [],
         "pageNumber": 0,
         "pageSize": 10,
-        "totalElements": 100,
-        "totalPages": 10,
-        "hasNext": true,
+        "totalElements": 0,
+        "totalPages": 0,
+        "hasNext": false,
         "hasPrevious": false,
         "isFirst": true,
-        "isLast": false
+        "isLast": true
     }
 }
 ```
@@ -216,89 +168,88 @@ Path Parameters:
 ```
 src/main/java/com/example/todoapi/
 ├── config/          # Configuration classes
+│   ├── OpenApiConfig.java
+│   ├── SecurityConfig.java
+│   └── WebConfig.java
 ├── controller/      # REST controllers
+│   ├── AuthController.java
+│   └── TodoController.java
 ├── dto/            # Data Transfer Objects
+│   ├── auth/
+│   └── todo/
 ├── entity/         # JPA entities
-├── exception/      # Custom exceptions
+│   ├── Todo.java
+│   └── User.java
 ├── repository/     # JPA repositories
-└── service/        # Business logic
+│   ├── TodoRepository.java
+│   └── UserRepository.java
+├── security/       # Security related classes
+│   ├── JwtAuthenticationFilter.java
+│   ├── JwtTokenUtil.java
+│   └── UserDetailsServiceImpl.java
+├── service/        # Business logic
+│   ├── impl/
+│   ├── TodoService.java
+│   └── UserService.java
+└── exception/      # Exception handling
+    └── GlobalExceptionHandler.java
 ```
 
-## Getting Started
+## Database Configuration
 
-### Prerequisites
-
-- Java 8 or higher
-- Maven
-- MySQL
-
-### Database Configuration
-
-Configure your database connection in `application.properties`:
-
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/todo_db
-spring.datasource.username=your_username
-spring.datasource.password=your_password
-```
-
-### H2 Database
-
-The application also supports H2 database for development and testing. To use H2 database, add the following configuration to `application.properties`:
-
-```properties
-spring.datasource.url=jdbc:h2:mem:testdb
-spring.datasource.driverClassName=org.h2.Driver
-spring.datasource.username=sa
-spring.datasource.password=
-spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
-spring.h2.console.enabled=true
-spring.h2.console.path=/h2-console
-```
-
-Access the H2 console at:
+### H2 Database (Development)
+The application uses H2 database by default. Access the H2 console at:
 ```
 http://localhost:8080/h2-console
 ```
 
-Connection details:
+H2 Console Configuration:
 - JDBC URL: `jdbc:h2:mem:testdb`
 - Username: `sa`
-- Password: (empty)
+- Password: (leave empty)
 
-### Building the Project
+## Security
 
+### JWT Authentication
+The API uses JWT (JSON Web Token) for authentication. To access protected endpoints:
+
+1. Register a new user:
+   ```bash
+   POST /api/auth/register
+   {
+       "username": "user",
+       "email": "user@example.com",
+       "password": "password123"
+   }
+   ```
+
+2. Login to get JWT token:
+   ```bash
+   POST /api/auth/login
+   {
+       "username": "user",
+       "password": "password123"
+   }
+   ```
+
+3. Include the token in requests:
+   ```
+   Authorization: Bearer <your_jwt_token>
+   ```
+
+## Development
+
+### Running Tests
 ```bash
-mvn clean install
+mvn test
 ```
 
-### Running the Application
-
+### Code Style
+The project follows Google Java Style Guide. To format your code:
 ```bash
-mvn spring-boot:run
+mvn spotless:apply
 ```
-
-The application will start on port 8080.
-
-## Error Handling
-
-The API uses a unified error response format:
-
-```json
-{
-    "code": 400,
-    "message": "Error message",
-    "data": null
-}
-```
-
-Common HTTP status codes:
-- 200: Success
-- 201: Created
-- 400: Bad Request
-- 404: Not Found
-- 500: Internal Server Error
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.

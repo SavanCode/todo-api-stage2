@@ -7,76 +7,76 @@ import com.example.todoapi.entity.User;
 import com.example.todoapi.repository.UserRepository;
 import com.example.todoapi.security.JwtTokenUtil;
 import com.example.todoapi.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class UserServiceImpl implements UserService, UserDetailsService {
+public class UserServiceImpl implements UserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtTokenUtil jwtTokenUtil;
+    private final UserDetailsService userDetailsService;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private JwtTokenUtil jwtTokenUtil;
+    public UserServiceImpl(UserRepository userRepository,
+                          PasswordEncoder passwordEncoder,
+                          AuthenticationManager authenticationManager,
+                          JwtTokenUtil jwtTokenUtil,
+                          UserDetailsService userDetailsService) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.jwtTokenUtil = jwtTokenUtil;
+        this.userDetailsService = userDetailsService;
+    }
 
     @Override
     @Transactional
-    public User register(RegisterRequest registerRequest) {
-        // 检查用户名是否已存在
-        if (existsByUsername(registerRequest.getUsername())) {
-            throw new RuntimeException("Username is already taken!");
+    public LoginResponse register(RegisterRequest registerRequest) {
+        if (userRepository.existsByUsername(registerRequest.getUsername())) {
+            throw new RuntimeException("Username is already taken");
         }
 
-        // 检查邮箱是否已存在
-        if (existsByEmail(registerRequest.getEmail())) {
-            throw new RuntimeException("Email is already in use!");
+        if (userRepository.existsByEmail(registerRequest.getEmail())) {
+            throw new RuntimeException("Email is already in use");
         }
 
-        // 创建新用户
         User user = new User();
         user.setUsername(registerRequest.getUsername());
         user.setEmail(registerRequest.getEmail());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
 
-        return userRepository.save(user);
+        userRepository.save(user);
+
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setUsername(registerRequest.getUsername());
+        loginRequest.setPassword(registerRequest.getPassword());
+        return login(loginRequest);
     }
 
     @Override
     public LoginResponse login(LoginRequest loginRequest) {
-        // 认证用户
         Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(
-                loginRequest.getUsername(),
-                loginRequest.getPassword()
-            )
+            new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
         );
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String jwt = jwtTokenUtil.generateToken(userDetails);
+        String token = jwtTokenUtil.generateToken(userDetails);
 
-        return new LoginResponse(jwt, "Bearer", userDetails.getUsername());
+        return new LoginResponse(token, "Bearer", userDetails.getUsername());
     }
 
     @Override
     public User findByUsername(String username) {
         return userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+            .orElseThrow(() -> new RuntimeException("User not found with username: " + username));
     }
 
     @Override
@@ -87,15 +87,5 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Override
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
-    }
-
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = findByUsername(username);
-        return org.springframework.security.core.userdetails.User
-                .withUsername(user.getUsername())
-                .password(user.getPassword())
-                .authorities("USER")
-                .build();
     }
 } 

@@ -27,6 +27,32 @@ public class JwtTokenUtil {
     @Value("${jwt.expiration}")
     private Long expiration;
 
+    public static class TokenValidationResult {
+        private final boolean valid;
+        private final String errorMessage;
+
+        private TokenValidationResult(boolean valid, String errorMessage) {
+            this.valid = valid;
+            this.errorMessage = errorMessage;
+        }
+
+        public static TokenValidationResult valid() {
+            return new TokenValidationResult(true, null);
+        }
+
+        public static TokenValidationResult invalid(String errorMessage) {
+            return new TokenValidationResult(false, errorMessage);
+        }
+
+        public boolean isValid() {
+            return valid;
+        }
+
+        public String getErrorMessage() {
+            return errorMessage;
+        }
+    }
+
     private Key getSigningKey() {
         byte[] keyBytes = secret.getBytes();
         return Keys.hmacShaKeyFor(keyBytes);
@@ -47,32 +73,8 @@ public class JwtTokenUtil {
                 .compact();
     }
 
-    public TokenValidationResult validateToken(String token, UserDetails userDetails) {
-        try {
-            final String username = extractUsername(token);
-            boolean isValid = username.equals(userDetails.getUsername()) && !isTokenExpired(token);
-            
-            if (!isValid) {
-                if (!username.equals(userDetails.getUsername())) {
-                    return new TokenValidationResult(false, "Token username does not match user details");
-                }
-                if (isTokenExpired(token)) {
-                    return new TokenValidationResult(false, "Token has expired");
-                }
-            }
-            
-            return new TokenValidationResult(true, "Token is valid");
-        } catch (ExpiredJwtException e) {
-            return new TokenValidationResult(false, "Token has expired");
-        } catch (UnsupportedJwtException e) {
-            return new TokenValidationResult(false, "Token is not supported");
-        } catch (MalformedJwtException e) {
-            return new TokenValidationResult(false, "Token is malformed");
-        } catch (SignatureException e) {
-            return new TokenValidationResult(false, "Token signature is invalid");
-        } catch (Exception e) {
-            return new TokenValidationResult(false, "Token validation failed: " + e.getMessage());
-        }
+    public String getUsernameFromToken(String token) {
+        return extractUsername(token);
     }
 
     public String extractUsername(String token) {
@@ -83,7 +85,7 @@ public class JwtTokenUtil {
         return extractClaim(token, Claims::getExpiration);
     }
 
-    private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
+    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
@@ -100,21 +102,28 @@ public class JwtTokenUtil {
         return extractExpiration(token).before(new Date());
     }
 
-    public static class TokenValidationResult {
-        private final boolean valid;
-        private final String message;
-
-        public TokenValidationResult(boolean valid, String message) {
-            this.valid = valid;
-            this.message = message;
+    public TokenValidationResult validateToken(String token) {
+        try {
+            Jwts.parserBuilder()
+                .setSigningKey(getSigningKey())
+                .build()
+                .parseClaimsJws(token);
+            return TokenValidationResult.valid();
+        } catch (ExpiredJwtException e) {
+            return TokenValidationResult.invalid("Token has expired");
+        } catch (UnsupportedJwtException e) {
+            return TokenValidationResult.invalid("Token is not supported");
+        } catch (MalformedJwtException e) {
+            return TokenValidationResult.invalid("Token is malformed");
+        } catch (SignatureException e) {
+            return TokenValidationResult.invalid("Token signature is invalid");
+        } catch (Exception e) {
+            return TokenValidationResult.invalid("Token validation failed: " + e.getMessage());
         }
+    }
 
-        public boolean isValid() {
-            return valid;
-        }
-
-        public String getMessage() {
-            return message;
-        }
+    public Boolean validateToken(String token, UserDetails userDetails) {
+        final String username = extractUsername(token);
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 } 

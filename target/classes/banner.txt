@@ -1,0 +1,15 @@
+ _____           _        _____ _____ 
+|_   _|         | |      |  __ \_   _|
+  | | ___   ___ | |___   | |  | || |  
+  | |/ _ \ / _ \| / __|  | |  | || |  
+  | | (_) | (_) | \__ \  | |__| || |_ 
+  \_/\___/ \___/|_|___/  |_____/_____|
+                                      
+:: Spring Boot ::  (v2.7.18)
+:: Todo API ::     (v1.0.0)
+
+🚀 Application is starting...
+📚 API Documentation: http://localhost:8080/swagger-ui/index.html
+🗄️  H2 Console:      http://localhost:8080/h2-console
+🔐 JWT Authentication: Enabled
+📊 Database: H2 (In-Memory) 

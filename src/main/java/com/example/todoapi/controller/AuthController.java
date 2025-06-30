@@ -28,10 +28,10 @@ public class AuthController {
 
     @PostMapping("/register")
     @Operation(summary = "用户注册", description = "注册新用户")
-    public ResponseEntity<ApiResult<User>> register(@Valid @RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<ApiResult<LoginResponse>> register(@Valid @RequestBody RegisterRequest registerRequest) {
         try {
-            User user = userService.register(registerRequest);
-            return ResponseEntity.ok(ApiResult.success(user));
+            LoginResponse loginResponse = userService.register(registerRequest);
+            return ResponseEntity.ok(ApiResult.success(loginResponse));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(ApiResult.error(400, e.getMessage()));
         }

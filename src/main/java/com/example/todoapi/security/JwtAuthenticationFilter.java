@@ -1,6 +1,6 @@
 package com.example.todoapi.security;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.todoapi.security.JwtTokenUtil.TokenValidationResult;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,35 +18,30 @@ import java.io.IOException;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    @Autowired
-    private JwtTokenUtil jwtTokenUtil;
+    private final JwtTokenUtil jwtTokenUtil;
+    private final UserDetailsService userDetailsService;
 
-    @Autowired
-    private UserDetailsService userDetailsService;
+    public JwtAuthenticationFilter(JwtTokenUtil jwtTokenUtil, UserDetailsService userDetailsService) {
+        this.jwtTokenUtil = jwtTokenUtil;
+        this.userDetailsService = userDetailsService;
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        
         try {
             String jwt = parseJwt(request);
-
             if (jwt != null) {
-                String username = jwtTokenUtil.extractUsername(jwt);
-
-                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                TokenValidationResult validationResult = jwtTokenUtil.validateToken(jwt);
+                if (validationResult.isValid()) {
+                    String username = jwtTokenUtil.getUsernameFromToken(jwt);
                     UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                     
-                    JwtTokenUtil.TokenValidationResult validationResult = jwtTokenUtil.validateToken(jwt, userDetails);
-                    
-                    if (validationResult.isValid()) {
-                        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                                userDetails, null, userDetails.getAuthorities());
-                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
-                    } else {
-                        logger.warn("JWT Token validation failed: " + validationResult.getMessage());
-                    }
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
                 }
             }
         } catch (Exception e) {
@@ -57,10 +52,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String parseJwt(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
+        String headerAuth = request.getHeader("Authorization");
+
+        if (headerAuth != null && headerAuth.startsWith("Bearer ")) {
+            return headerAuth.substring(7);
         }
+
         return null;
     }
 } 

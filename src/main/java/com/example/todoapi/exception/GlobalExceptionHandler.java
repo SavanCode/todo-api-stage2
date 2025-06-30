@@ -36,6 +36,38 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 处理未授权异常
+     * 当用户未认证或没有权限时抛出此异常
+     * @param ex UnauthorizedException 异常对象
+     * @return 包含错误信息的 ResponseEntity
+     */
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthorizedException(UnauthorizedException ex) {
+        ErrorResponse error = new ErrorResponse(
+            HttpStatus.UNAUTHORIZED.value(),
+            ex.getMessage(),
+            LocalDateTime.now()
+        );
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+    }
+
+    /**
+     * 处理运行时异常
+     * 当业务逻辑出现错误时抛出此异常
+     * @param ex RuntimeException 异常对象
+     * @return 包含错误信息的 ResponseEntity
+     */
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex) {
+        ErrorResponse error = new ErrorResponse(
+            HttpStatus.BAD_REQUEST.value(),
+            ex.getMessage(),
+            LocalDateTime.now()
+        );
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
      * 处理参数验证异常
      * 当请求参数不符合验证规则时抛出此异常
      * @param ex MethodArgumentNotValidException 异常对象

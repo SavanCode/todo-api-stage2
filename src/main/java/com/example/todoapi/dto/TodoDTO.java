@@ -29,4 +29,10 @@ public class TodoDTO {
     
     @Schema(description = "更新时间", example = "2024-01-01T12:00:00")
     private String updatedAt;
+    
+    @Schema(description = "用户ID", example = "1")
+    private Long userId;
+    
+    @Schema(description = "用户名", example = "john_doe")
+    private String username;
 }

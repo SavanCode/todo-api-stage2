@@ -9,9 +9,9 @@ public interface UserService {
     /**
      * 注册新用户
      * @param registerRequest 注册请求
-     * @return 注册成功的用户
+     * @return 登录响应（包含JWT token）
      */
-    User register(RegisterRequest registerRequest);
+    LoginResponse register(RegisterRequest registerRequest);
 
     /**
      * 用户登录

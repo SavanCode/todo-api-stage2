@@ -12,6 +12,7 @@ A RESTful API for managing todo items built with Spring Boot.
 - [Project Structure](#project-structure)
 - [Database Configuration](#database-configuration)
 - [Security](#security)
+- [Testing](#testing)
 - [Development](#development)
 - [License](#license)
 
@@ -237,11 +238,275 @@ The API uses JWT (JSON Web Token) for authentication. To access protected endpoi
    Authorization: Bearer <your_jwt_token>
    ```
 
+## Testing
+
+### Test Overview
+The project includes comprehensive unit tests covering all layers of the application:
+- **Repository Layer**: Database integration tests
+- **Service Layer**: Business logic unit tests
+- **Controller Layer**: Web layer tests
+- **Application**: Context loading tests
+
+### Running Tests
+
+#### Run All Tests
+```bash
+mvn test
+```
+
+#### Quick Test Verification
+To quickly verify that all tests are passing:
+```bash
+./mvnw test | grep -E "(Tests run|BUILD|Results:)"
+```
+
+Or use the provided verification script:
+```bash
+./test-verification.sh
+```
+
+Expected output for successful tests:
+```
+[INFO] Tests run: 57, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+```
+
+The verification script will show:
+```
+🧪 Running Todo API Tests...
+================================
+📊 Test Results:
+[INFO] Tests run: 57, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+
+✅ All tests passed successfully!
+🎉 Your Todo API is working correctly.
+```
+
+#### Run Specific Test Classes
+```bash
+# Run only repository tests
+mvn test -Dtest=*RepositoryTest
+
+# Run only service tests
+mvn test -Dtest=*ServiceImplTest
+
+# Run only controller tests
+mvn test -Dtest=*ControllerTest
+```
+
+#### Run Individual Test Methods
+```bash
+# Run specific test method
+mvn test -Dtest=UserServiceImplTest#testRegisterUser
+
+# Run multiple test methods
+mvn test -Dtest=UserServiceImplTest#testRegisterUser,UserServiceImplTest#testLoginUser
+```
+
+### Test Results Interpretation
+
+#### Successful Test Run
+When all tests pass, you should see output similar to:
+```
+[INFO] Tests run: 57, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 57, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] BUILD SUCCESS
+```
+
+**Key indicators of success:**
+- `Failures: 0` - No test failures
+- `Errors: 0` - No test errors
+- `BUILD SUCCESS` - All tests passed
+- Total tests run should be 57 (may vary with future additions)
+
+#### Failed Test Run
+If tests fail, you'll see output like:
+```
+[INFO] Tests run: 57, Failures: 2, Errors: 1, Skipped: 0
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Failed tests:
+[INFO]   UserServiceImplTest.testLoginUser
+[INFO]   TodoServiceImplTest.testCreateTodo
+[INFO] 
+[INFO] Tests in error:
+[INFO]   AuthControllerTest.testRegisterEndpoint
+[INFO] 
+[INFO] Tests run: 57, Failures: 2, Errors: 1, Skipped: 0
+[INFO] 
+[INFO] BUILD FAILURE
+```
+
+### Test Structure
+
+#### Repository Tests (`@DataJpaTest`)
+Located in `src/test/java/com/example/todoapi/repository/`
+
+**UserRepositoryTest** (12 tests):
+- `save_shouldCreateUser` - Test user creation
+- `findById_shouldReturnUser_whenUserExists` - Test user retrieval
+- `findByUsername_shouldReturnUser_whenUserExists` - Test username lookup
+- `existsByEmail_shouldReturnTrue_whenEmailExists` - Test email existence
+- `existsByEmail_shouldReturnFalse_whenEmailDoesNotExist` - Test non-existent email
+- `existsByUsername_shouldReturnTrue_whenUsernameExists` - Test username existence
+- `existsByUsername_shouldReturnFalse_whenUsernameDoesNotExist` - Test non-existent username
+- `delete_shouldRemoveUser` - Test user deletion
+- `findAll_shouldReturnAllUsers` - Test bulk retrieval
+
+**TodoRepositoryTest** (12 tests):
+- `save_shouldCreateTodo` - Test todo creation
+- `findById_shouldReturnTodo_whenTodoExists` - Test todo retrieval
+- `findByUserId_shouldReturnUserTodos` - Test user-specific todos
+- `findByUserIdAndCompleted_shouldReturnFilteredTodos` - Test filtered queries
+- `findByUserId_shouldReturnEmpty_whenUserHasNoTodos` - Test empty results
+- `update_shouldModifyTodo` - Test todo updates
+- `delete_shouldRemoveTodo` - Test todo deletion
+- `findByUserIdWithPagination_shouldReturnPaginatedResults` - Test pagination
+
+#### Service Tests (`@ExtendWith(MockitoExtension.class)`)
+Located in `src/test/java/com/example/todoapi/service/impl/`
+
+**UserServiceImplTest** (11 tests):
+- `testRegisterUser` - Test user registration
+- `testRegisterUserWithExistingUsername` - Test duplicate username handling
+- `testRegisterUserWithExistingEmail` - Test duplicate email handling
+- `testLoginUser` - Test user login
+- `testLoginUserWithInvalidCredentials` - Test invalid login
+- `testGenerateJwtToken` - Test JWT token generation
+- `testValidateJwtToken` - Test JWT token validation
+- `testLoadUserByUsername` - Test user loading
+- `testLoadUserByUsernameNotFound` - Test non-existent user loading
+
+**TodoServiceImplTest** (14 tests):
+- `testCreateTodo` - Test todo creation
+- `testCreateTodoWithInvalidData` - Test validation
+- `testGetTodoById` - Test todo retrieval
+- `testGetTodoByIdNotFound` - Test non-existent todo
+- `testGetTodoByIdUnauthorized` - Test unauthorized access
+- `testUpdateTodo` - Test todo updates
+- `testUpdateTodoNotFound` - Test updating non-existent todo
+- `testDeleteTodo` - Test todo deletion
+- `testGetTodosByUser` - Test user-specific todos
+- `testGetTodosByUserWithPagination` - Test paginated results
+- `testGetTodosByStatus` - Test status filtering
+- `testMarkTodoAsCompleted` - Test completion status
+- `testSearchTodos` - Test search functionality
+
+#### Controller Tests (`@WebMvcTest`)
+Located in `src/test/java/com/example/todoapi/controller/`
+
+**AuthControllerTest** (5 tests):
+- `testRegisterEndpoint` - Test registration endpoint
+- `testRegisterEndpointWithInvalidData` - Test validation
+- `testLoginEndpoint` - Test login endpoint
+- `testLoginEndpointWithInvalidCredentials` - Test invalid login
+- `testLoginEndpointWithMissingData` - Test missing data handling
+
+**HelloControllerTest** (1 test):
+- `testHelloEndpoint` - Test basic endpoint functionality
+
+#### Application Tests
+Located in `src/test/java/com/example/todoapi/`
+
+**TodoApiApplicationTests** (1 test):
+- `contextLoads` - Test Spring context loading
+
+### Test Configuration
+
+#### Test Dependencies
+The project includes the following test dependencies:
+- **JUnit 5**: Core testing framework
+- **Mockito**: Mocking framework for unit tests
+- **Spring Boot Test**: Integration testing support
+- **Spring Security Test**: Security testing utilities
+- **H2 Database**: In-memory database for testing
+
+#### Test Properties
+Tests use a separate configuration in `src/test/resources/application.properties`:
+- H2 in-memory database
+- Disabled security for certain tests
+- Test-specific logging configuration
+
+### Continuous Integration
+
+#### GitHub Actions (Recommended)
+Create `.github/workflows/test.yml`:
+```yaml
+name: Tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    - name: Run tests
+      run: mvn test
+```
+
+#### Local Development
+For development, you can run tests with different verbosity levels:
+
+```bash
+# Quiet mode (minimal output)
+mvn test -q
+
+# Verbose mode (detailed output)
+mvn test -X
+
+# Run tests and generate coverage report
+mvn test jacoco:report
+```
+
+### Troubleshooting
+
+#### Common Test Issues
+
+1. **Database Connection Issues**
+   ```bash
+   # Clean and rebuild
+   mvn clean test
+   ```
+
+2. **Security Configuration Issues**
+   - Ensure `@WithMockUser` annotations are used for secured endpoints
+   - Check that security filters are properly excluded in controller tests
+
+3. **Mock Configuration Issues**
+   - Verify that all dependencies are properly mocked
+   - Check that mock behavior is correctly defined
+
+4. **Test Data Issues**
+   - Ensure test data is properly set up in `@BeforeEach` methods
+   - Verify that test isolation is maintained
+
+#### Test Logs
+Enable debug logging for tests by adding to `src/test/resources/application.properties`:
+```properties
+logging.level.com.example.todoapi=DEBUG
+logging.level.org.springframework.test=DEBUG
+```
+
 ## Development
 
 ### Running Tests
 ```bash
 mvn test
+```
+
+For quick test verification:
+```bash
+./test-verification.sh
 ```
 
 ### Code Style
